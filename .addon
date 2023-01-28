@@ -1,0 +1,23 @@
+{
+  "Title": "Simple Mirror",
+  "Type": "addon",
+  "Org": "duccsoft",
+  "Ident": "simple_mirror",
+  "Tags": "",
+  "Schema": 1,
+  "HasAssets": true,
+  "AssetsPath": "",
+  "ResourcePaths": null,
+  "HasCode": true,
+  "CodePath": "/code/",
+  "Metadata": {
+    "PrimaryAsset": "",
+    "PhysicsMins": "-1,-1,-1",
+    "PhysicsMaxs": "1,1,1",
+    "RenderMins": "-1,-1,-1",
+    "RenderMaxs": "-1,-1,-1",
+    "Summary": "",
+    "Description": "",
+    "Public": false
+  }
+}
