@@ -3,8 +3,8 @@
 	<PropertyGroup>
 		<TargetFramework>net7.0</TargetFramework>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<AssemblyName>simple_mirror</AssemblyName>
-		<PackageId>simple_mirror</PackageId>
+		<AssemblyName>Simple Mirror</AssemblyName>
+		<PackageId>Simple Mirror</PackageId>
 		<LangVersion>11</LangVersion>
 		<NoWarn>1701;1702;1591;</NoWarn>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
@@ -29,7 +29,7 @@
 
   <PropertyGroup>
 	<OutputPath>C:\Program Files (x86)\Steam\steamapps\common\sbox/.vs/output/</OutputPath>
-	<DocumentationFile>C:\Program Files (x86)\Steam\steamapps\common\sbox/.vs/output/simple_mirror.xml</DocumentationFile>
+	<DocumentationFile>C:\Program Files (x86)\Steam\steamapps\common\sbox/.vs/output/Simple Mirror.xml</DocumentationFile>
 	<RootNamespace>Sandbox</RootNamespace>
 	<Nullable>disable</Nullable>
   </PropertyGroup>
@@ -45,7 +45,7 @@
 	</ItemGroup>
 
   <ItemGroup>
-		<ProjectReference Include="C:\Program Files (x86)\Steam\steamapps\common\sbox\addons\base\code\Base.csproj" />
+		<ProjectReference Include="C:\Program Files (x86)\Steam\steamapps\common\sbox\addons\base\code\Base Library.csproj" />
 
   </ItemGroup>
 

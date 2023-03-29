@@ -11,9 +11,11 @@ namespace SimpleMirror;
 public partial class Mirror : ModelEntity
 {
 
-	[Property, Net, DefaultValue("materials/mirror.vmat")]
+    [Property, Net, DefaultValue("materials/mirror.vmat")]
 	public Material MirrorMaterial { get; set; } = Material.Load("materials/mirror.vmat");
+	[Net] public float ClippingPlaneOffset { get; set; } = -1.0f;
 	private static bool _debugDraw { get; set; } = false;
+	private static bool _updateDraw { get; set; } = true;
 	protected ScenePortal so;
 
 	public override void Spawn()
@@ -30,6 +32,19 @@ public partial class Mirror : ModelEntity
 		Predictable = false;
 	}
 
+	/// <summary>
+	/// Useful in conjunction with <c>cl_debug_overlay_mirror</c> for 
+	/// debugging the behavior of the mirror.
+	/// </summary>
+	[ConCmd.Client("cl_mirror_update_toggle")]
+	public static void ToggleMirrorUpdate()
+	{
+		_updateDraw = !_updateDraw;
+	}
+
+	/// <summary>
+	/// Displays various colored overlays relating to how the mirror functions.
+	/// </summary>
 	[ConCmd.Client("cl_debug_overlay_mirror")]
 	public static void MirrorDebugDraw(bool enable )
 	{
@@ -74,19 +89,44 @@ public partial class Mirror : ModelEntity
 		SceneObject.RenderingEnabled = false;
 	}
 
+	// For debug purposes, store the last frame's clipping plane.
+	private Plane _clippingPlane;
+
 	[Event.PreRender]
 	public void UpdatePortalView()
 	{
-
 		if ( !Sandbox.Game.IsClient || !so.IsValid() )
 			return;
-		so.RenderingEnabled = true;
+
+        if (_debugDraw)
+        {
+			DebugOverlay.Text($"{Name}", Position);
+			DebugOverlay.Sphere(Position, 2f, Color.Yellow);
+
+			var clippingPlaneOrigin = so.ViewPosition + _clippingPlane.Normal * _clippingPlane.Distance;
+			DebugOverlay.Sphere(clippingPlaneOrigin, 2.0f, Color.Green, 0, true);
+			DebugOverlay.Text($"clipping plane ({Name})", clippingPlaneOrigin);
+            // Draw clipping plane normal
+            Vector3 lineEnd = clippingPlaneOrigin + _clippingPlane.Normal * 25f;
+            DebugOverlay.Line(clippingPlaneOrigin, lineEnd, Color.Green, 0, true);
+
+            var reflectDirection = so.ViewRotation.Forward;
+			DebugOverlay.Text($"mirror camera {Name}", so.ViewPosition);
+			DebugOverlay.Sphere(so.ViewPosition, 5f, Color.Red, 0, true);
+			DebugOverlay.Line(so.ViewPosition, so.ViewPosition + reflectDirection * 25f, Color.Red, 0, true);
+        }
+
+        if (!_updateDraw)
+            return;
+
+        so.RenderingEnabled = true;
 		so.Rotation = Rotation;
 		so.Position = Position;
 
-		Vector3 planeNormal = GetPlaneNormal();
+        Vector3 planeNormal = GetPlaneNormal();
 
-		Plane p = new( Position, planeNormal );
+        Plane p = new( Position, planeNormal );
+
 		// Reflect
 		Matrix viewMatrix = Matrix.CreateWorld( Camera.Position, Camera.Rotation.Forward, Camera.Rotation.Up );
 		Matrix reflectMatrix = ReflectMatrix( viewMatrix, p );
@@ -98,43 +138,23 @@ public partial class Mirror : ModelEntity
 		so.ViewPosition = reflectionPosition;
 		so.ViewRotation = reflectionRotation;
 
-		if (_debugDraw)
-			DebugOverlay.Sphere( so.ViewPosition, 10, Color.Red );
-
 		so.Aspect = Screen.Width / Screen.Height;
 
-		so.FieldOfView = MathF.Atan( MathF.Tan( Camera.FieldOfView.DegreeToRadian() * 0.41f ) * (so.Aspect * 0.75f) ).RadianToDegree() * 2.0f;
+		so.FieldOfView = Camera.FieldOfView;
 
-		Vector3 planePosition = Position;
-		Plane clippingPlane = new Plane( Position - so.ViewPosition, planeNormal );
-		if ( _debugDraw )
-		{
-			// Draw clipping plane normal
-			Vector3 lineEnd = planePosition + planeNormal * 100f;
-			DebugOverlay.DrawVector( planePosition, lineEnd, Color.Green );
-		}
-		// small tolerance to prevent seam
-		clippingPlane.Distance -= 1.0f;
+		_clippingPlane = new Plane(Position - so.ViewPosition, planeNormal);
+		_clippingPlane.Distance += ClippingPlaneOffset;
 
-		so.SetClipPlane( clippingPlane );
+		so.SetClipPlane(_clippingPlane);
 	}
 
 	public Vector3 GetPlaneNormal()
 	{
-		TraceResult tr = Trace.Sphere( 10f, Camera.Position, Position )
+		TraceResult tr = Trace.Ray( Camera.Position, Position )
 			.WithTag( "mirror" )
 			.EntitiesOnly()
 			.IncludeClientside()
 			.Run();
-		// It should be impossible for the trace to not hit.
-		if ( !tr.Hit )
-		{
-			Log.Error( "Nothing hit!" );
-		}
-		if ( _debugDraw )
-		{
-			DebugOverlay.Line( tr.StartPosition, tr.EndPosition, Color.Yellow );
-		}
 		return tr.Normal;
 	}
 
